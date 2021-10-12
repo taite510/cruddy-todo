@@ -2,15 +2,23 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('underscore');
 const counter = require('./counter');
-
+const promise = require('bluebird');
 var items = {};
-
+var readFilePromise = promise.promisify(fs.readFile);
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  var id = counter.getNextUniqueId();
-  items[id] = text;
-  callback(null, { id, text });
+  counter.getNextUniqueId((err, id) => {
+    var directory = path.join(exports.dataDir, `${id}.txt`);
+    fs.writeFile(directory, text, (err) => {
+      if (err) {
+        throw ('error saving text');
+      } else {
+        callback(null, {id, text});
+      }
+    });
+  });
+  //callback(null, { id, text });
 };
 
 exports.readAll = (callback) => {
@@ -21,12 +29,16 @@ exports.readAll = (callback) => {
 };
 
 exports.readOne = (id, callback) => {
-  var text = items[id];
-  if (!text) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback(null, { id, text });
-  }
+  var directory = path.join(exports.dataDir, `${id}.txt`);
+  fs.readFile(directory, (err, todoText) => {
+    if (err) {
+      callback(new Error(`No item with id: ${id}`));
+    } else {
+      var combine = '';
+      combine += todoText;
+      callback(null, { id, text: combine });
+    }
+  });
 };
 
 exports.update = (id, text, callback) => {
