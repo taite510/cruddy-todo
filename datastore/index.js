@@ -42,31 +42,38 @@ exports.readOne = (id, callback) => {
 
 exports.update = (id, text, callback) => {
   var directory = path.join(exports.dataDir, `${id}.txt`);
-  fs.writeFile(directory, text, (err) => {
+  fs.readFile(directory, (err, whatever) => {
     if (err) {
-      throw ('failed update');
+      callback(new Error(`No item with id: ${id}`));
     } else {
-      callback(null, {id, text});
+      fs.writeFile(directory, text, (err) => {
+        if (err) {
+          throw ('failed update');
+        } else {
+          callback(null, {id, text});
+        }
+      });
     }
   });
-  // var item = items[id];
-  // if (!item) {
-  //   callback(new Error(`No item with id: ${id}`));
-  // } else {
-  //   items[id] = text;
-  //   callback(null, { id, text });
-  // }
 };
 
 exports.delete = (id, callback) => {
-  var item = items[id];
-  delete items[id];
-  if (!item) {
-    // report an error if item not found
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback();
-  }
+  var directory = path.join(exports.dataDir, `${id}.txt`);
+  fs.unlink(directory, (err) => {
+    if (err) {
+      callback(new Error(`No item with id: ${id}`));
+    } else {
+      callback(null, id);
+    }
+  });
+  // var item = items[id];
+  // delete items[id];
+  // if (!item) {
+  //   // report an error if item not found
+  //   callback(new Error(`No item with id: ${id}`));
+  // } else {
+  //   callback();
+  // }
 };
 
 // Config+Initialization code -- DO NOT MODIFY /////////////////////////////////
